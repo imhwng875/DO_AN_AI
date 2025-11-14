@@ -93,10 +93,42 @@ class KnapsackApp:
 
         self._check_running_threads() # Gọi hàm của Dev 3
     def _check_running_threads(self):
-        pass 
+        """Kiểm tra số lượng luồng đang chạy và bật lại nút Run."""
+        if threading.active_count() <= 2: # 1 luồng chính + 1 luồng (nếu còn)
+             self.run_button.config(state="normal")
     def start_parallel_run(self):
+        """Khởi tạo hai luồng (Thread) để chạy Hill Climbing và GWO song song."""
+        if not self.items:
+            messagebox.showerror("Lỗi", "Vui lòng tải dữ liệu trước.")
+            return
 
-        pass 
+        try:
+            max_w = int(self.max_w_entry.get())
+            max_iter = int(self.iter_entry.get())
+        except ValueError:
+            messagebox.showerror("Lỗi", "Tham số 'Khối lượng tối đa' hoặc 'Số lần lặp' không hợp lệ!")
+            return
+
+        names, values, weights = self.items_data['names'], self.items_data['values'], self.items_data['weights']
+
+        if not names:
+            messagebox.showerror("Lỗi", "Dữ liệu vật phẩm bị rỗng, vui lòng tải lại file.")
+            return
+
+        self.run_button.config(state="disabled")
+        self.clear_results() # Gọi hàm của Dev 4
+
+        thread_hc = threading.Thread(
+            target=self._run_single_algo, # Gọi hàm của Dev 4
+            args=("Hill Climbing", HillClimbing, self.hc_result, self.hc_history, names, values, weights, max_w, max_iter)
+        )
+        thread_hc.start()
+
+        thread_gwo = threading.Thread(
+            target=self._run_single_algo, # Gọi hàm của Dev 4
+            args=("Grey Wolf Optimizer", GreyWolfOptimizer, self.gwo_result, self.gwo_history, names, values, weights, max_w, max_iter)
+        )
+        thread_gwo.start() 
     def load_selected_data(self):
         """Lấy tên file từ Combobox và tải dữ liệu."""
         filename = self.data_combobox.get()
